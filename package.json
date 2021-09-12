@@ -1,0 +1,32 @@
+{
+  "name": "express-mesto",
+  "version": "1.0.0",
+  "description": "`/routes` — папка с файлами роутера  \r `/controllers` — папка с файлами контроллеров пользователя и карточки   \r `/models` — папка с файлами описания схем пользователя и карточки",
+  "main": "index.js",
+  "scripts": {
+    "start": "node app.js",
+    "dev": "nodemon app.js",
+    "lint": "npx eslint .",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/EdwardRadzh/express-mesto.git"
+  },
+  "author": "Eduard Radzhabov",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/EdwardRadzh/express-mesto/issues"
+  },
+  "homepage": "https://github.com/EdwardRadzh/express-mesto#readme",
+  "devDependencies": {
+    "eslint": "^7.32.0",
+    "nodemon": "^2.0.12"
+  },
+  "dependencies": {
+    "body-parser": "^1.19.0",
+    "express": "^4.17.1",
+    "mongoose": "^6.0.5"
+  },
+  "keywords": []
+}
