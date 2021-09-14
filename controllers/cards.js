@@ -30,8 +30,8 @@ const createCard = (req, res) => {
 };
 
 const deleteCard = (req, res) => {
-  const { id } = req.params.cardId;
-  Card.findByIdAndRemove(id)
+  const { cardId } = req.params;
+  Card.findByIdAndRemove(cardId)
     .then((card) => {
       if (!card) {
         res.status(404).send({ message: 'Нет карточки с таким Id' });
@@ -55,12 +55,14 @@ const likeCard = (req, res) => {
     { new: true },
   )
     .then((like) => {
+      if (!like) {
+        res.status(404).send({ message: 'Нет пользователя с таким Id' });
+        return;
+      }
       res.status(200).send(like);
     })
     .catch((err) => {
-      if (err.name === 'NoValidId') {
-        res.status(404).send({ message: 'Нет пользователя с таким Id' });
-      } else if (err.name === 'CastError') {
+      if (err.name === 'CastError') {
         res.status(400).send({ message: `Введены некорректные данные: ${err.name}` });
       } else {
         res.status(500).send({ message: `Внутренняя ошибка сервера: ${err}` });
@@ -75,12 +77,14 @@ const dislikeCard = (req, res) => {
     { new: true },
   )
     .then((like) => {
+      if (!like) {
+        res.status(404).send({ message: 'Нет пользователя с таким Id' });
+        return;
+      }
       res.status(200).send(like);
     })
     .catch((err) => {
-      if (err.name === 'NoValidId') {
-        res.status(404).send({ message: 'Нет пользователя с таким Id' });
-      } else if (err.name === 'CastError') {
+      if (err.name === 'CastError') {
         res.status(400).send({ message: `Введены некорректные данные: ${err.name}` });
       } else {
         res.status(500).send({ message: `Внутренняя ошибка сервера: ${err}` });

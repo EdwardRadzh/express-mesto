@@ -15,7 +15,7 @@ const getUsers = (req, res) => {
 };
 
 const getUserById = (req, res) => {
-  User.findById(req.params.id)
+  User.findById(req.params.userId)
     .then((user) => {
       if (!user) {
         res.status(404).send({ message: 'Нет пользователя с таким id' });
@@ -55,15 +55,18 @@ const updateUser = (req, res) => {
     },
     {
       new: true,
+      runValidators: true,
     })
     .then((newUser) => {
+      if (!newUser) {
+        res.status(404).send({ message: 'id пользователя не найден!' });
+        return;
+      }
       res.status(200).send(newUser);
     })
     .catch((err) => {
       if (err.name === 'ValidationError') {
         res.status(400).send({ message: `Ошибка при валидации: ${err}` });
-      } else if (err.name === 'DocumentNotFoundError') {
-        res.status(404).send({ message: `id пользователя не найден! ${err}` });
       } else {
         res.status(500).send({ message: `Внутренняя ошибка сервера: ${err}` });
       }
@@ -77,15 +80,18 @@ const updateAvatar = (req, res) => {
     },
     {
       new: true,
+      runValidators: true,
     })
     .then((avatar) => {
+      if (!avatar) {
+        res.status(404).send({ message: 'id пользователя не найден!' });
+        return;
+      }
       res.status(200).send(avatar);
     })
     .catch((err) => {
       if (err.name === 'ValidationError') {
         res.status(400).send({ message: `Ошибка при валидации: ${err}` });
-      } else if (err.name === 'DocumentNotFoundError') {
-        res.status(404).send({ message: `id пользователя не найден! ${err}` });
       } else {
         res.status(500).send({ message: `Внутренняя ошибка сервера: ${err}` });
       }
