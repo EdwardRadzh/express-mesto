@@ -1,11 +1,13 @@
 const Card = require('../models/card');
+const NotFound = require('../errors/NotFound');
+const Forbidden = require('../errors/Forbidden');
+const BadRequest = require('../errors/BadRequest');
 
 const getCards = (req, res) => {
   Card.find({})
     .then((cards) => {
       if (cards.length === 0) {
-        res.status(404).send({ message: 'Нет карточек' });
-        return;
+        throw new NotFound('Нет карточек');
       }
       res.status(200).send(cards);
     })
@@ -14,38 +16,34 @@ const getCards = (req, res) => {
     });
 };
 
-const createCard = (req, res) => {
+const createCard = (req, res, next) => {
   const { name, link } = req.body;
-  const owner = req.user._id;
-  Card.create({ name, link, owner })
+  Card.create({ name, link, owner: req.user._id })
     .then((card) => {
       res.status(200).send(card);
     })
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        res.status(400).send({ message: `Введены некорректные данные: ${err}` });
+        throw new BadRequest(err.message);
       }
       res.status(500).send({ message: `Внутренняя ошибка сервера: ${err}` });
-    });
+    })
+    .catch(next);
 };
 
-const deleteCard = (req, res) => {
+const deleteCard = (req, res, next) => {
   const { cardId } = req.params;
   Card.findByIdAndRemove(cardId)
     .then((card) => {
       if (!card) {
-        res.status(404).send({ message: 'Нет карточки с таким Id' });
-        return;
+        throw new NotFound('Нет карточки с таким Id');
+      }
+      if (String(card.owner) !== String(req.user._id)) {
+        throw new Forbidden('Недостаточно прав');
       }
       res.status(200).send(card);
     })
-    .catch((err) => {
-      if (err.name === 'CastError') {
-        res.status(400).send({ message: `Введены некорректные данные: ${err.name}` });
-      } else {
-        res.status(500).send({ message: `Внутренняя ошибка сервера: ${err}` });
-      }
-    });
+    .catch(next);
 };
 
 const likeCard = (req, res) => {
@@ -56,14 +54,13 @@ const likeCard = (req, res) => {
   )
     .then((like) => {
       if (!like) {
-        res.status(404).send({ message: 'Нет пользователя с таким Id' });
-        return;
+        throw new NotFound('Нет пользователя с таким Id');
       }
       res.status(200).send(like);
     })
     .catch((err) => {
       if (err.name === 'CastError') {
-        res.status(400).send({ message: `Введены некорректные данные: ${err.name}` });
+        throw new BadRequest(err.message);
       } else {
         res.status(500).send({ message: `Внутренняя ошибка сервера: ${err}` });
       }
@@ -78,14 +75,13 @@ const dislikeCard = (req, res) => {
   )
     .then((like) => {
       if (!like) {
-        res.status(404).send({ message: 'Нет пользователя с таким Id' });
-        return;
+        throw new NotFound('Нет пользователя с таким Id');
       }
       res.status(200).send(like);
     })
     .catch((err) => {
       if (err.name === 'CastError') {
-        res.status(400).send({ message: `Введены некорректные данные: ${err.name}` });
+        throw new BadRequest(err.message);
       } else {
         res.status(500).send({ message: `Внутренняя ошибка сервера: ${err}` });
       }
