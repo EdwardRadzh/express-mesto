@@ -1,4 +1,8 @@
 const usersRouter = require('express').Router();
+const { celebrate, Joi } = require('celebrate');
+
+const linkRegExp = require('../constants/linkRegExp');
+
 const {
   getUsers,
   getUserById,
@@ -8,9 +12,38 @@ const {
 } = require('../controllers/users');
 
 usersRouter.get('/users', getUsers);
-usersRouter.get('/users/:userId', getUserById);
-usersRouter.patch('/users/me', updateUser);
-usersRouter.patch('/users/me/avatar', updateAvatar);
-usersRouter.get('/users/me', getCurrentUser);
+
+usersRouter.get('/users/me',
+  celebrate({
+    params: Joi.object().keys({
+      _id: Joi.string().alphanum().length(24).hex(),
+    }),
+  }),
+  getCurrentUser);
+
+usersRouter.get('/users/:userId',
+  celebrate({
+    params: Joi.object().keys({
+      _id: Joi.string().alphanum().length(24).hex(),
+    }),
+  }),
+  getUserById);
+
+usersRouter.patch('/users/me',
+  celebrate({
+    body: Joi.object().keys({
+      name: Joi.string().required().min(2).max(30),
+      about: Joi.string().required().min(2).max(20),
+    }),
+  }),
+  updateUser);
+
+usersRouter.patch('/users/me/avatar',
+  celebrate({
+    body: Joi.object().keys({
+      avatar: Joi.string().required().pattern(linkRegExp),
+    }),
+  }),
+  updateAvatar);
 
 module.exports = usersRouter;

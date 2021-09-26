@@ -3,17 +3,12 @@ const NotFound = require('../errors/NotFound');
 const Forbidden = require('../errors/Forbidden');
 const BadRequest = require('../errors/BadRequest');
 
-const getCards = (req, res) => {
+const getCards = (req, res, next) => {
   Card.find({})
     .then((cards) => {
-      if (cards.length === 0) {
-        throw new NotFound('Нет карточек');
-      }
       res.status(200).send(cards);
     })
-    .catch((err) => {
-      res.status(500).send({ message: `Внутренняя ошибка сервера: ${err}` });
-    });
+    .catch(next);
 };
 
 const createCard = (req, res, next) => {
@@ -26,7 +21,6 @@ const createCard = (req, res, next) => {
       if (err.name === 'ValidationError') {
         throw new BadRequest(err.message);
       }
-      res.status(500).send({ message: `Внутренняя ошибка сервера: ${err}` });
     })
     .catch(next);
 };
@@ -46,7 +40,7 @@ const deleteCard = (req, res, next) => {
     .catch(next);
 };
 
-const likeCard = (req, res) => {
+const likeCard = (req, res, next) => {
   Card.findByIdAndUpdate(
     req.params.cardId,
     { $addToSet: { likes: req.user._id } },
@@ -62,12 +56,12 @@ const likeCard = (req, res) => {
       if (err.name === 'CastError') {
         throw new BadRequest(err.message);
       } else {
-        res.status(500).send({ message: `Внутренняя ошибка сервера: ${err}` });
+        next(err);
       }
     });
 };
 
-const dislikeCard = (req, res) => {
+const dislikeCard = (req, res, next) => {
   Card.findByIdAndUpdate(
     req.params.cardId,
     { $pull: { likes: req.user._id } },
@@ -83,7 +77,7 @@ const dislikeCard = (req, res) => {
       if (err.name === 'CastError') {
         throw new BadRequest(err.message);
       } else {
-        res.status(500).send({ message: `Внутренняя ошибка сервера: ${err}` });
+        next(err);
       }
     });
 };

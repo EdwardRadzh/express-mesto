@@ -3,8 +3,9 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/user');
 const BadRequest = require('../errors/BadRequest');
 const Conflict = require('../errors/Conflict');
-const Forbidden = require('../errors/Forbidden');
+const AuthError = require('../errors/AuthError');
 const NotFound = require('../errors/NotFound');
+const DefaultError = require('../errors/DefaultError');
 
 const { NODE_ENV, JWT_SECRET } = process.env;
 
@@ -12,13 +13,10 @@ const login = (req, res, next) => {
   const {
     email, password,
   } = req.body;
-  if (!email || !password) {
-    throw new BadRequest('Отсутсвуют email или пароль');
-  }
   User.findUserByCredentials(email, password)
     .then((user) => {
       if (!user) {
-        throw new Forbidden('Такого пользователя не существует');
+        throw new AuthError('Неверный логин или пароль');
       }
       const token = jwt.sign(
         { _id: user._id },
@@ -38,9 +36,6 @@ const login = (req, res, next) => {
 const getUsers = (req, res, next) => {
   User.find({})
     .then((users) => {
-      if (users.length === 0) {
-        throw new NotFound('Пользователи не найдены');
-      }
       res.status(200).send({ data: users });
     })
     .catch(next);
@@ -68,20 +63,29 @@ const createUser = (req, res, next) => {
       }
       bcrypt.hash(password, 10, (err, hash) => {
         if (err) {
-          return res.status(500).send({ message: 'Ошибка на сервере' });
+          throw new DefaultError('Ошибка на сервере');
         }
         User.create({
           name, about, avatar, email, password: hash,
         })
           .then((user) => {
-            res.status(200).send(user);
+            res.status(200).send({
+              data: {
+                name: user.name, about: user.about, avatar: user.avatar, email: user.email,
+              },
+            });
           });
       });
     })
 
     .catch((err) => {
       if (err.name === 'MongoError' && err.code === 11000) {
-        throw new Conflict('Пользователь с таким email уже существует');
+        next(new Conflict('Пользователь с таким email уже существует'));
+      }
+      if (err.name === 'ValidationError') {
+        next(new BadRequest(err.message));
+      } else {
+        next(err);
       }
     })
     .catch(next);
@@ -105,10 +109,11 @@ const updateUser = (req, res, next) => {
     })
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        throw new BadRequest(err.message);
+        next(new BadRequest(err.message));
+      } else {
+        next(err);
       }
-    })
-    .catch(next);
+    });
 };
 
 const updateAvatar = (req, res, next) => {
@@ -127,9 +132,12 @@ const updateAvatar = (req, res, next) => {
       res.status(200).send(avatar);
     })
     .catch((err) => {
-      throw new BadRequest(err.message);
-    })
-    .catch(next);
+      if (err.name === 'ValidationError') {
+        next(new BadRequest(err.message));
+      } else {
+        next(err);
+      }
+    });
 };
 
 const getCurrentUser = (req, res, next) => {
